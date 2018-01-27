@@ -8,6 +8,7 @@ void setup() {
   radio.setPALevel(RF24_PA_LOW);
   radio.openWritingPipe(addresses[1]);
   radio.openReadingPipe(1, addresses[0]);
+  Serial.setTimeout(50);
 }
 
 void loop() {
@@ -16,7 +17,9 @@ void loop() {
   String str = Serial.readStringUntil(endMarker);
   //Serial.println(getValue(str, ' ', 0));
 
-  char cha[] = "A1";//str;
+  const int len = str.length();
+  char cha[len];//str;
+  str.toCharArray(cha,str.length());
   Serial.println(cha);
   radio.stopListening();
 
@@ -39,7 +42,7 @@ void loop() {
   if ( timeout ) {                                            // Describe the results
     Serial.println(F("Failed, response timed out."));
   } else {
-    char got_time[] = "";      // Grab the response, compare, and send to debugging spew
+    char got_time[] = "sdftrhshrshrtsthrsdthjsdtjsdtjsdtjsdtjsdthjdtjudtjudthju";      // Grab the response, compare, and send to debugging spew
     radio.read( &got_time, radio.getDynamicPayloadSize() );
     unsigned long end_time = micros();
 
