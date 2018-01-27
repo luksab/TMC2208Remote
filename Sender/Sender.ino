@@ -16,12 +16,7 @@ void loop() {
   String str = Serial.readStringUntil(endMarker);
   //Serial.println(getValue(str, ' ', 0));
 
-  char* cha = 0;
-  if (cha != 0) {
-    delete [] cha;
-  }
-  cha = new char [str.length()];
-  str.toCharArray(cha, str.length());
+  char cha[] = "A1";//str;
   Serial.println(cha);
   radio.stopListening();
 
