@@ -42,7 +42,7 @@ void loop() {
   if ( timeout ) {                                            // Describe the results
     Serial.println(F("Failed, response timed out."));
   } else {
-    char got_time[] = "sdftrhshrshrtsthrsdthjsdtjsdtjsdtjsdtjsdthjdtjudtjudthju";      // Grab the response, compare, and send to debugging spew
+    char got_time[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";      // Grab the response, compare, and send to debugging spew
     radio.read( &got_time, radio.getDynamicPayloadSize() );
     unsigned long end_time = micros();
 
