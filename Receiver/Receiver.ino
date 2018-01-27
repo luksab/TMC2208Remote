@@ -18,9 +18,16 @@ TMC2208Stepper driver = TMC2208Stepper(&Serial2);	// Create driver and use
 RF24 radio(21, 22);
 byte addresses[][6] = {"1Node", "2Node"};
 
+unsigned long start1;
+unsigned long start2;
+int delay1 = 100;
+int delay2 = 100;
+int rot1  = 0;
+int rot2  = 0;
+
 void setup() {
   Serial.begin(115200);														// Init used serial port
-  while (!Serial);																	// Wait for port to be ready
+  while (!Serial);																// Wait for port to be ready
 
   Serial.println("Hi!");
 
@@ -49,29 +56,107 @@ void setup() {
 
   digitalWrite(DIR_PIN1, LOW);
   digitalWrite(DIR_PIN2, LOW);
+  start1 = micros();
+  start2 = micros();
 }
 
 void loop() {
   if ( radio.available()) {
-    // Variable for the received timestamp
-    //while (radio.available()) {                                   // While there is data ready
     int len = 0;
     len = radio.getDynamicPayloadSize();
     char cha[len] = "";
-    radio.read( &cha, len );             // Get the payload
-    //}
+    radio.read( &cha, len );
 
-    radio.stopListening();                                        // First, stop listening so we can talk
-    radio.write( &cha, strlen(cha) );              // Send the final one back.
+    radio.stopListening();
+    radio.write( &cha, strlen(cha) ); //send back controll
     radio.startListening();
-    if (strlen(cha) > 0)
-      Serial.println(cha);
+    if (strlen(cha) > 0) {
+      char** args = str_split(cha, ',');
+      //for (int i=0;i<2;i++)
+      //Serial.println(args[i]);
+      delay1 = atoi(args[0]);
+      delay2 = atoi(args[1]);
+      rot1   = atoi(args[2]);
+      rot2   = atoi(args[3]);
+      Serial.println(delay1);
+      Serial.println(rot1);
+    }
   }
 
-
-  /*for (int i = 0; i < 102040; i++) { //256*200*2
+  //Serial.println(getValue(cha, ' ', 0));
+  if(rot1 > 0 && !(micros() - start1 < delay1)){
+    start1 = micros();
+    digitalWrite(DIR_PIN1, LOW);
+    rot1--;
     digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
-    delayMicroseconds(25);
-    }
-    digitalWrite(DIR_PIN1, !digitalRead(DIR_PIN1)); // Rotate*/
+  }
+  if(rot1 < 0 && !(micros() - start1 < delay1)){
+    start1 = micros();
+    digitalWrite(DIR_PIN1, HIGH);
+    rot1++;
+    digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
+  }
+  
+  if(rot2 > 0 && !(micros() - start2 < delay2)){
+    start2 = millis();
+    digitalWrite(DIR_PIN2, LOW);
+    rot2--;
+    digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+  }
+  if(rot2 < 0 && !(micros() - start2 < delay2)){
+    start2 = micros();
+    digitalWrite(DIR_PIN2, LOW);
+    rot2++;
+    digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+  }
 }
+
+char** str_split(char* a_str, const char a_delim)
+{
+  char** result    = 0;
+  size_t count     = 0;
+  char* tmp        = a_str;
+  char* last_comma = 0;
+  char delim[2];
+  delim[0] = a_delim;
+  delim[1] = 0;
+
+  /* Count how many elements will be extracted. */
+  while (*tmp)
+  {
+    if (a_delim == *tmp)
+    {
+      count++;
+      last_comma = tmp;
+    }
+    tmp++;
+  }
+
+  /* Add space for trailing token. */
+  count += last_comma < (a_str + strlen(a_str) - 1);
+
+  /* Add space for terminating null string so caller
+     knows where the list of returned strings ends. */
+  count++;
+
+  result = (char**)malloc(sizeof(char*) * count);
+
+  if (result)
+  {
+    size_t idx  = 0;
+    char* token = strtok(a_str, delim);
+
+    while (token)
+    {
+      assert(idx < count);
+      *(result + idx++) = strdup(token);
+      token = strtok(0, delim);
+    }
+    assert(idx == count - 1);
+    *(result + idx) = 0;
+  }
+
+  return result;
+}
+
+
