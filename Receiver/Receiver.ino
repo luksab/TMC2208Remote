@@ -52,19 +52,22 @@ void setup() {
 }
 
 void loop() {
-  char cha[] = "";
   if ( radio.available()) {
     // Variable for the received timestamp
-    while (radio.available()) {                                   // While there is data ready
-      radio.read( &cha, radio.getDynamicPayloadSize() );             // Get the payload
-    }
+    //while (radio.available()) {                                   // While there is data ready
+    int len = 0;
+    len = radio.getDynamicPayloadSize();
+    char cha[len] = "";
+    radio.read( &cha, len );             // Get the payload
+    //}
 
     radio.stopListening();                                        // First, stop listening so we can talk
     radio.write( &cha, strlen(cha) );              // Send the final one back.
     radio.startListening();
+    if (strlen(cha) > 0)
+      Serial.println(cha);
   }
-  if (strlen(cha) > 0)
-    Serial.println(cha);
+
 
   /*for (int i = 0; i < 102040; i++) { //256*200*2
     digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
