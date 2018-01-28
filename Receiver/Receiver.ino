@@ -20,17 +20,17 @@ byte addresses[][6] = {"1Node", "2Node"};
 
 unsigned long start1;
 unsigned long start2;
+long zeitU = 10000000.0;
 int delay1 =  100;
 int delay2 = 1600;
-unsigned long rotation1 = 0;
 bool start = false;
-unsigned long startPosY = 0;
+long startPosY = 0;
 long startPosX = 0;
-unsigned long endPosY = 0;
+long endPosY = 0;
 long endPosX = 0;
-unsigned long posY = 0;
+long posY = 0;
 long posX = 0;
-unsigned long goalPosY = 0;
+long goalPosY = 0;
 long goalPosX = 0;
 
 
@@ -83,19 +83,31 @@ void loop() {
       char** args = str_split(cha, ',');
       //for (int i=0;i<5;i++)
       //  Serial.println(args[i]);
-      delay(1);
       if (strcmp(args[0], "startPos") == 0) {
         startPosX = posX;
         startPosY = posY;
       }
-      else if (strcmp(args[0], "EndPos") == 0) {
+      else if (strcmp(args[0], "endPos") == 0) {
         endPosX = posX;
         endPosY = posY;
       }
       else if (strcmp(args[0], "start") == 0) {
         start = true;
+        if ((abs(posY - endPosY) != 0) && (abs(posX - endPosX) != 0)) {
+          delay1 = (int)(zeitU / (abs(posY - endPosY)));
+          delay2 = (int)(zeitU / (abs(posX - endPosX)));
+        }
+        Serial.println(delay1 + " " + delay2);
+        goalPosX = endPosX;
+        goalPosY = endPosY;
+      }
+      else if (strcmp(args[0], "goToStart") == 0) {
+        start = true;
         goalPosX = startPosX;
         goalPosY = startPosY;
+      }
+      else if (strcmp(args[0], "setTime") == 0) {
+        zeitU = atoi(args[1]) * 1000000;
       }
       else if (strcmp(args[0], "restart") == 0) {
         driver.pdn_disable(1);                          // Use PDN/UART pin for communication
@@ -105,42 +117,52 @@ void loop() {
         driver.microsteps(256);
         driver.mstep_reg_select(1);
         driver.en_spreadCycle(false);
+        delay1 =  100;
+        delay2 = 1600;
+        start = false;
+        startPosY = 0;
+        startPosX = 0;
+        endPosY = 0;
+        endPosX = 0;
+        goalPosY = 0;
+        goalPosX = 0;
       }
       else {
         //delay1 = atoi(args[0]);
         //delay2 = atoi(args[1]);
         goalPosX += atoi(args[0]);
-        goalPosY += atoi(args[1]);
+        if (goalPosY + atoi(args[1]) > 0)
+          goalPosY += atoi(args[1]);
       }
     }
   }
   if (!(micros() - start1 < delay1)) {
     start1 = micros();
-    if (goalPosX > posX) {
-      Serial.println("X:"+posX);
-      digitalWrite(DIR_PIN1, HIGH);
-      posX++;
+    if (goalPosY > posY) {
+      //Serial.println("X:"+posX);
+      digitalWrite(DIR_PIN1, LOW);
+      posY++;
       digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1));
     }
-    else if (goalPosX < posX) {
-      Serial.println("X:"+posX);
-      digitalWrite(DIR_PIN1, LOW);
-      posX--;
+    else if (goalPosY < posY) {
+      //Serial.println("X:"+posX);
+      digitalWrite(DIR_PIN1, HIGH);
+      posY--;
       digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1));
     }
   }
   if (!(micros() - start2 < delay2)) {
     start2 = micros();
-    if (goalPosY > posY) {
-      Serial.println("Y:"+posY);
+    if (goalPosX > posX) {
+      //Serial.println("Y:"+posY);
       digitalWrite(DIR_PIN2, HIGH);
-      posY++;
+      posX++;
       digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
     }
-    else if (goalPosY < posY) {
-      Serial.println("Y:"+posY);
+    else if (goalPosX < posX) {
+      //Serial.println("Y:"+posY);
       digitalWrite(DIR_PIN2, LOW);
-      posY--;
+      posX--;
       digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
     }
   }
