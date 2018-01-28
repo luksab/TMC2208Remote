@@ -24,6 +24,15 @@ int delay1 = 100;
 int delay2 = 100;
 int rot1  = 0;
 int rot2  = 0;
+unsigned long rotation1 = 0;
+bool start = false;
+unsigned long startPosX = 0;
+long startPosY = 0;
+unsigned long endPosX = 0;
+long endPosY = 0;
+unsigned long posX = 0;
+long posY = 0;
+
 
 void setup() {
   Serial.begin(115200);														// Init used serial port
@@ -72,42 +81,71 @@ void loop() {
     radio.startListening();
     if (strlen(cha) > 0) {
       char** args = str_split(cha, ',');
-      //for (int i=0;i<2;i++)
-      //Serial.println(args[i]);
-      delay1 = atoi(args[0]);
-      delay2 = atoi(args[1]);
-      rot1   = atoi(args[2]);
-      rot2   = atoi(args[3]);
-      Serial.println(delay1);
-      Serial.println(rot1);
+      //for (int i=0;i<5;i++)
+      //  Serial.println(args[i]);
+      if (strcmp(args[0], "startPos") == 0) {
+        startPosX = posX;
+        startPosY = posY;
+      }
+      else if (strcmp(args[0], "EndPos") == 0) {
+        endPosX = posX;
+        endPosY = posY;
+      }
+      else if (strcmp(args[0], "start") == 0) {
+        start = true;
+        goalPosX = startPosX;
+        goalPosY = startPosY
+      }
+      else if (strcmp(args[0], "restart") == 0) {
+        driver.pdn_disable(1);                          // Use PDN/UART pin for communication
+        driver.I_scale_analog(0);                       // Adjust current from the registers
+        driver.rms_current(500);                        // Set driver current 500mA
+        driver.toff(0x2);                               // Enable driver
+        driver.microsteps(256);
+        driver.mstep_reg_select(1);
+        driver.en_spreadCycle(false);
+      }
+      else {
+        delay1 = atoi(args[0]);
+        delay2 = atoi(args[1]);
+        rot1   = atoi(args[2]);
+        rot2   = atoi(args[3]);
+      }
     }
   }
 
   //Serial.println(getValue(cha, ' ', 0));
-  if(rot1 > 0 && !(micros() - start1 < delay1)){
+  if (!(micros() - start1 < delay1)) {
     start1 = micros();
-    digitalWrite(DIR_PIN1, LOW);
-    rot1--;
-    digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
+    if ((rot1 > 0) && rotation1 > 0) {
+      digitalWrite(DIR_PIN1, HIGH);
+      if (!justRotateY)
+        rot1--;
+      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
+      rotation1--;
+    }
+    if (rot1 < 0) {
+      digitalWrite(DIR_PIN1, LOW);
+      if (!justRotateY)
+        rot1++;
+      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
+      rotation1++;
+    }
   }
-  if(rot1 < 0 && !(micros() - start1 < delay1)){
-    start1 = micros();
-    digitalWrite(DIR_PIN1, HIGH);
-    rot1++;
-    digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
-  }
-  
-  if(rot2 > 0 && !(micros() - start2 < delay2)){
-    start2 = millis();
-    digitalWrite(DIR_PIN2, LOW);
-    rot2--;
-    digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
-  }
-  if(rot2 < 0 && !(micros() - start2 < delay2)){
+
+  if (!(micros() - start2 < delay2)) {
     start2 = micros();
-    digitalWrite(DIR_PIN2, LOW);
-    rot2++;
-    digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+    if (rot2 > 0) {
+      digitalWrite(DIR_PIN2, LOW);
+      if (!justRotateX)
+        rot2--;
+      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+    } else if (rot2 < 0) {
+      digitalWrite(DIR_PIN2, HIGH);
+      if (!justRotateY)
+        rot2++;
+      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+    }
   }
 }
 
