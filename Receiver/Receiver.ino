@@ -21,17 +21,17 @@ byte addresses[][6] = {"1Node", "2Node"};
 unsigned long start1;
 unsigned long start2;
 int delay1 = 100;
-int delay2 = 100;
-int rot1  = 0;
-int rot2  = 0;
+int delay2 = 1600;
 unsigned long rotation1 = 0;
 bool start = false;
-unsigned long startPosX = 0;
-long startPosY = 0;
-unsigned long endPosX = 0;
-long endPosY = 0;
-unsigned long posX = 0;
-long posY = 0;
+unsigned long startPosY = 0;
+long startPosX = 0;
+unsigned long endPosY = 0;
+long endPosX = 0;
+unsigned long posY = 0;
+long posX = 0;
+unsigned long goalPosY = 0;
+long goalPosX = 0;
 
 
 void setup() {
@@ -94,7 +94,7 @@ void loop() {
       else if (strcmp(args[0], "start") == 0) {
         start = true;
         goalPosX = startPosX;
-        goalPosY = startPosY
+        goalPosY = startPosY;
       }
       else if (strcmp(args[0], "restart") == 0) {
         driver.pdn_disable(1);                          // Use PDN/UART pin for communication
@@ -108,46 +108,38 @@ void loop() {
       else {
         delay1 = atoi(args[0]);
         delay2 = atoi(args[1]);
-        rot1   = atoi(args[2]);
-        rot2   = atoi(args[3]);
+        goalPosX += atoi(args[2]);
+        goalPosX += atoi(args[3]);
       }
     }
   }
-
-  //Serial.println(getValue(cha, ' ', 0));
   if (!(micros() - start1 < delay1)) {
     start1 = micros();
-    if ((rot1 > 0) && rotation1 > 0) {
+    if (goalPosX > posX) {
       digitalWrite(DIR_PIN1, HIGH);
-      if (!justRotateY)
-        rot1--;
-      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
-      rotation1--;
+      posX++;
+      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1));
     }
-    if (rot1 < 0) {
+    else if (goalPosX < posX) {
       digitalWrite(DIR_PIN1, LOW);
-      if (!justRotateY)
-        rot1++;
-      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1)); // Step
-      rotation1++;
+      posX--;
+      digitalWrite(STEP_PIN1, !digitalRead(STEP_PIN1));
     }
   }
-
   if (!(micros() - start2 < delay2)) {
-    start2 = micros();
-    if (rot2 > 0) {
-      digitalWrite(DIR_PIN2, LOW);
-      if (!justRotateX)
-        rot2--;
-      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
-    } else if (rot2 < 0) {
+    if (goalPosY > posY) {
       digitalWrite(DIR_PIN2, HIGH);
-      if (!justRotateY)
-        rot2++;
-      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2)); // Step
+      posX++;
+      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
+    }
+    else if (goalPosY < posY) {
+      digitalWrite(DIR_PIN2, LOW);
+      posY--;
+      digitalWrite(STEP_PIN2, !digitalRead(STEP_PIN2));
     }
   }
 }
+
 
 char** str_split(char* a_str, const char a_delim)
 {
